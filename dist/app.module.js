@@ -1,0 +1,27 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AppModule = void 0;
+const common_1 = require("@nestjs/common");
+const app_controller_1 = require("./app.controller");
+const app_service_1 = require("./app.service");
+const scraper_controller_1 = require("./scraper/scraper.controller");
+const scraper_service_1 = require("./scraper/scraper.service");
+const tracking_controller_1 = require("./tracking/tracking.controller");
+const tracking_service_1 = require("./tracking/tracking.service");
+let AppModule = class AppModule {
+};
+exports.AppModule = AppModule;
+exports.AppModule = AppModule = __decorate([
+    (0, common_1.Module)({
+        imports: [],
+        controllers: [app_controller_1.AppController, scraper_controller_1.ScraperController, tracking_controller_1.TrackingController],
+        providers: [app_service_1.AppService, scraper_service_1.ScraperService, tracking_service_1.TrackingService],
+    })
+], AppModule);
+//# sourceMappingURL=app.module.js.map
