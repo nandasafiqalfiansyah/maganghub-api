@@ -13,6 +13,8 @@ Default server: `http://localhost:3000`
 
 Swagger UI: `http://localhost:3000/`
 
+Health check: `http://localhost:3000/health`
+
 ## Konfigurasi
 
 Set optional environment variable:
