@@ -25,18 +25,80 @@ export class ScraperController {
   }
 
   @ApiOperation({
-    summary: 'Ambil list nama perusahaan dari lowongan yang terdeteksi',
+    summary: 'Ambil list perusahaan dari API Kemnaker',
   })
-  @ApiQuery({ name: 'keyword', required: false, type: String })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 50 })
+  @ApiQuery({ name: 'order_direction', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: String, example: '1' })
+  @ApiQuery({ name: 'limit', required: false, type: String, example: '21' })
+  @ApiQuery({ name: 'per_page', required: false, type: String, example: '21' })
   @Get('companies')
   async getCompanies(
-    @Query('keyword') keyword?: string,
+    @Query('order_direction') order_direction?: string,
+    @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('per_page') per_page?: string,
   ) {
     return this.scraperService.scrapeCompanies({
-      keyword,
-      limit: limit ? Number(limit) : undefined,
+      order_direction,
+      page,
+      limit,
+      per_page,
+    });
+  }
+
+  @ApiOperation({ summary: 'Ambil list provinsi dari API Kemnaker' })
+  @ApiQuery({
+    name: 'order_by',
+    required: false,
+    type: String,
+    example: 'nama_propinsi',
+  })
+  @ApiQuery({ name: 'order_direction', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: String, example: '1' })
+  @ApiQuery({ name: 'limit', required: false, type: String, example: 'all' })
+  @ApiQuery({ name: 'per_page', required: false, type: String, example: 'all' })
+  @Get('provinces')
+  async getProvinces(
+    @Query('order_by') order_by?: string,
+    @Query('order_direction') order_direction?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('per_page') per_page?: string,
+  ) {
+    return this.scraperService.scrapeProvinces({
+      order_by,
+      order_direction,
+      page,
+      limit,
+      per_page,
+    });
+  }
+
+  @ApiOperation({ summary: 'Ambil list kota/kabupaten dari API Kemnaker' })
+  @ApiQuery({
+    name: 'order_by',
+    required: false,
+    type: String,
+    example: 'nama_kabupaten',
+  })
+  @ApiQuery({ name: 'order_direction', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: String, example: '1' })
+  @ApiQuery({ name: 'limit', required: false, type: String, example: 'all' })
+  @ApiQuery({ name: 'per_page', required: false, type: String, example: 'all' })
+  @Get('cities')
+  async getCities(
+    @Query('order_by') order_by?: string,
+    @Query('order_direction') order_direction?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('per_page') per_page?: string,
+  ) {
+    return this.scraperService.scrapeCities({
+      order_by,
+      order_direction,
+      page,
+      limit,
+      per_page,
     });
   }
 }

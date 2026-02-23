@@ -1,16 +1,87 @@
 import { Injectable } from '@nestjs/common';
-import {
-  CompanyResult,
+import type {
   InternshipItem,
   InternshipQuery,
   ScrapeInternshipsResult,
 } from './scraper.types';
+
+export interface ProvinceApiItem {
+  id_propinsi: string;
+  id_negara: string | null;
+  kode_propinsi: string | null;
+  nama_propinsi: string;
+  ref_negara: {
+    id_negara: string;
+    kode_negara: string | null;
+    nama_negara: string | null;
+  } | null;
+}
+
+export interface CityApiItem {
+  id_kabupaten: string;
+  id_propinsi: string | null;
+  kode_kabupaten: string | null;
+  nama_kabupaten: string;
+  ref_propinsi: {
+    id_propinsi: string;
+    id_negara: string | null;
+    kode_propinsi: string | null;
+    nama_propinsi: string | null;
+  } | null;
+}
+
+export interface CompanyApiItem {
+  id_perusahaan: string;
+  id_desa: string | null;
+  nama_perusahaan: string;
+  deskripsi_perusahaan: string | null;
+  alamat: string | null;
+  logo: string | null;
+  banner: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  email: string | null;
+  telepon: string | null;
+  kode_sektor_usaha: string | null;
+  nama_sektor_usaha: string | null;
+  kode_kabupaten: string | null;
+  nama_kabupaten: string | null;
+  kode_provinsi: string | null;
+  nama_provinsi: string | null;
+  kode_pos: string | null;
+  skala_usaha: string | null;
+  id_jumlah_pegawai: string | null;
+  kode_wlkp: string | null;
+  nib: string | null;
+  npwp: string | null;
+  ref_jumlah_pegawai: {
+    id_jumlah_pegawai: string;
+    jumlah_pegawai: string | null;
+    norut: number | null;
+  } | null;
+}
+
+export interface CompanyApiResult {
+  sourceUrl: string;
+  fetchedAt: string;
+  total: number;
+  companies: CompanyApiItem[];
+}
+
+export interface RegionApiResult<TItem> {
+  sourceUrl: string;
+  fetchedAt: string;
+  total: number;
+  items: TItem[];
+}
 
 @Injectable()
 export class ScraperService {
   private readonly baseUrl =
     process.env.MAGANG_HUB_BASE_URL?.replace(/\/$/, '') ||
     'https://maganghub.com';
+  private readonly kemnakerApiBaseUrl =
+    'https://maganghub.kemnaker.go.id/be/v1/api/list';
 
   async scrapeInternships(
     query: InternshipQuery,
@@ -42,25 +113,263 @@ export class ScraperService {
     };
   }
 
-  async scrapeCompanies(
-    query: Pick<InternshipQuery, 'keyword' | 'limit'>,
-  ): Promise<CompanyResult> {
-    const internships = await this.scrapeInternships({
-      keyword: query.keyword,
-      limit: Math.max(this.normalizeLimit(query.limit), 50),
+  async scrapeCompanies(query: {
+    page?: string;
+    limit?: string;
+    per_page?: string;
+    order_direction?: string;
+  }): Promise<CompanyApiResult> {
+    const params = new URLSearchParams({
+      order_direction: query.order_direction || 'ASC',
+      page: query.page || '1',
+      limit: query.limit || '21',
+      per_page: query.per_page || '21',
     });
-
-    const companies = Array.from(
-      new Set(
-        internships.items.map((item) => item.company.trim()).filter(Boolean),
-      ),
-    ).sort((a, b) => a.localeCompare(b));
+    const sourceUrl = `${this.kemnakerApiBaseUrl}/companies?${params.toString()}`;
+    const rows = await this.fetchKemnakerList(sourceUrl);
+    const companies = rows
+      .map((item) => this.toCompanyItem(item))
+      .filter((item): item is CompanyApiItem => item !== null);
 
     return {
-      sourceUrl: internships.sourceUrl,
-      fetchedAt: internships.fetchedAt,
+      sourceUrl,
+      fetchedAt: new Date().toISOString(),
       total: companies.length,
       companies,
+    };
+  }
+
+  async scrapeProvinces(query: {
+    page?: string;
+    limit?: string;
+    per_page?: string;
+    order_by?: string;
+    order_direction?: string;
+  }): Promise<RegionApiResult<ProvinceApiItem>> {
+    const params = new URLSearchParams({
+      order_by: query.order_by || 'nama_propinsi',
+      order_direction: query.order_direction || 'ASC',
+      page: query.page || '1',
+      limit: query.limit || 'all',
+      per_page: query.per_page || 'all',
+    });
+    const sourceUrl = `${this.kemnakerApiBaseUrl}/provinces?${params.toString()}`;
+    const rows = await this.fetchKemnakerList(sourceUrl);
+    const provinces = rows
+      .map((item) => this.toProvinceItem(item))
+      .filter((item): item is ProvinceApiItem => item !== null);
+
+    return {
+      sourceUrl,
+      fetchedAt: new Date().toISOString(),
+      total: provinces.length,
+      items: provinces,
+    };
+  }
+
+  async scrapeCities(query: {
+    page?: string;
+    limit?: string;
+    per_page?: string;
+    order_by?: string;
+    order_direction?: string;
+  }): Promise<RegionApiResult<CityApiItem>> {
+    const params = new URLSearchParams({
+      order_by: query.order_by || 'nama_kabupaten',
+      order_direction: query.order_direction || 'ASC',
+      page: query.page || '1',
+      limit: query.limit || 'all',
+      per_page: query.per_page || 'all',
+    });
+    const sourceUrl = `${this.kemnakerApiBaseUrl}/cities?${params.toString()}`;
+    const rows = await this.fetchKemnakerList(sourceUrl);
+    const cities = rows
+      .map((item) => this.toCityItem(item))
+      .filter((item): item is CityApiItem => item !== null);
+
+    return {
+      sourceUrl,
+      fetchedAt: new Date().toISOString(),
+      total: cities.length,
+      items: cities,
+    };
+  }
+
+  private async fetchKemnakerList(url: string): Promise<unknown[]> {
+    const response = await this.safeFetch(url);
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload: unknown = await response.json();
+    return this.extractListFromPayload(payload);
+  }
+
+  private extractListFromPayload(payload: unknown): unknown[] {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    if (!payload || typeof payload !== 'object') {
+      return [];
+    }
+
+    const root = payload as Record<string, unknown>;
+    const directCandidates = ['data', 'items', 'results', 'rows'];
+
+    for (const key of directCandidates) {
+      const value = root[key];
+      if (Array.isArray(value)) {
+        return value;
+      }
+    }
+
+    if (root.data && typeof root.data === 'object') {
+      const dataObj = root.data as Record<string, unknown>;
+      for (const key of directCandidates) {
+        const value = dataObj[key];
+        if (Array.isArray(value)) {
+          return value;
+        }
+      }
+    }
+
+    return [];
+  }
+
+  private toProvinceItem(value: unknown): ProvinceApiItem | null {
+    if (!value || typeof value !== 'object') {
+      return null;
+    }
+
+    const row = value as Record<string, unknown>;
+    const id_propinsi =
+      this.asString(row.id_propinsi) ||
+      this.asString(row.province_id) ||
+      this.asString(row.id);
+    const nama_propinsi =
+      this.asString(row.nama_propinsi) ||
+      this.asString(row.province) ||
+      this.asString(row.name);
+
+    if (!id_propinsi || !nama_propinsi) {
+      return null;
+    }
+
+    const refNegaraRaw = this.asRecord(row.ref_negara);
+
+    return {
+      id_propinsi,
+      id_negara: this.asNullableString(row.id_negara),
+      kode_propinsi: this.asNullableString(row.kode_propinsi),
+      nama_propinsi: this.cleanText(nama_propinsi),
+      ref_negara: refNegaraRaw
+        ? {
+            id_negara: this.asString(refNegaraRaw.id_negara),
+            kode_negara: this.asNullableString(refNegaraRaw.kode_negara),
+            nama_negara: this.asNullableString(refNegaraRaw.nama_negara),
+          }
+        : null,
+    };
+  }
+
+  private toCityItem(value: unknown): CityApiItem | null {
+    if (!value || typeof value !== 'object') {
+      return null;
+    }
+
+    const row = value as Record<string, unknown>;
+    const id_kabupaten =
+      this.asString(row.id_kabupaten) ||
+      this.asString(row.city_id) ||
+      this.asString(row.id);
+    const nama_kabupaten =
+      this.asString(row.nama_kabupaten) ||
+      this.asString(row.city) ||
+      this.asString(row.name);
+
+    if (!id_kabupaten || !nama_kabupaten) {
+      return null;
+    }
+
+    const refPropinsiRaw = this.asRecord(row.ref_propinsi);
+
+    return {
+      id_kabupaten,
+      id_propinsi:
+        this.asNullableString(row.id_propinsi) ||
+        this.asNullableString(row.province_id),
+      kode_kabupaten: this.asNullableString(row.kode_kabupaten),
+      nama_kabupaten: this.cleanText(nama_kabupaten),
+      ref_propinsi: refPropinsiRaw
+        ? {
+            id_propinsi: this.asString(refPropinsiRaw.id_propinsi),
+            id_negara:
+              this.asNullableString(refPropinsiRaw.id_negara) ||
+              this.asNullableString(refPropinsiRaw.country_id),
+            kode_propinsi: this.asNullableString(refPropinsiRaw.kode_propinsi),
+            nama_propinsi: this.asNullableString(refPropinsiRaw.nama_propinsi),
+          }
+        : null,
+    };
+  }
+
+  private toCompanyItem(value: unknown): CompanyApiItem | null {
+    if (!value || typeof value !== 'object') {
+      return null;
+    }
+
+    const row = value as Record<string, unknown>;
+    const id_perusahaan =
+      this.asString(row.id_perusahaan) ||
+      this.asString(row.company_id) ||
+      this.asString(row.id);
+    const nama_perusahaan =
+      this.asString(row.nama_perusahaan) ||
+      this.asString(row.company) ||
+      this.asString(row.name);
+
+    if (!id_perusahaan || !nama_perusahaan) {
+      return null;
+    }
+
+    const refJumlahPegawaiRaw = this.asRecord(row.ref_jumlah_pegawai);
+
+    return {
+      id_perusahaan,
+      id_desa: this.asNullableString(row.id_desa),
+      nama_perusahaan: this.cleanText(nama_perusahaan),
+      deskripsi_perusahaan: this.asNullableString(row.deskripsi_perusahaan),
+      alamat: this.asNullableString(row.alamat),
+      logo: this.asNullableString(row.logo),
+      banner: this.asNullableString(row.banner),
+      created_at: this.asNullableString(row.created_at),
+      updated_at: this.asNullableString(row.updated_at),
+      email: this.asNullableString(row.email),
+      telepon: this.asNullableString(row.telepon),
+      kode_sektor_usaha: this.asNullableString(row.kode_sektor_usaha),
+      nama_sektor_usaha: this.asNullableString(row.nama_sektor_usaha),
+      kode_kabupaten: this.asNullableString(row.kode_kabupaten),
+      nama_kabupaten: this.asNullableString(row.nama_kabupaten),
+      kode_provinsi: this.asNullableString(row.kode_provinsi),
+      nama_provinsi: this.asNullableString(row.nama_provinsi),
+      kode_pos: this.asNullableString(row.kode_pos),
+      skala_usaha: this.asNullableString(row.skala_usaha),
+      id_jumlah_pegawai: this.asNullableString(row.id_jumlah_pegawai),
+      kode_wlkp: this.asNullableString(row.kode_wlkp),
+      nib: this.asNullableString(row.nib),
+      npwp: this.asNullableString(row.npwp),
+      ref_jumlah_pegawai: refJumlahPegawaiRaw
+        ? {
+            id_jumlah_pegawai: this.asString(
+              refJumlahPegawaiRaw.id_jumlah_pegawai,
+            ),
+            jumlah_pegawai: this.asNullableString(
+              refJumlahPegawaiRaw.jumlah_pegawai,
+            ),
+            norut: this.asNullableNumber(refJumlahPegawaiRaw.norut),
+          }
+        : null,
     };
   }
 
@@ -346,6 +655,40 @@ export class ScraperService {
 
   private asString(value: unknown): string {
     return typeof value === 'string' ? value : '';
+  }
+
+  private asNullableString(value: unknown): string | null {
+    if (typeof value === 'string') {
+      const cleaned = this.cleanText(value);
+      return cleaned || null;
+    }
+
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+
+    return null;
+  }
+
+  private asNullableNumber(value: unknown): number | null {
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value : null;
+    }
+
+    if (typeof value === 'string' && value.trim()) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    return null;
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return null;
+    }
+
+    return value as Record<string, unknown>;
   }
 
   private toAbsoluteUrl(value: string): string {

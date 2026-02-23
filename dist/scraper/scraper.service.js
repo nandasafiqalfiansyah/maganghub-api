@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 let ScraperService = class ScraperService {
     baseUrl = process.env.MAGANG_HUB_BASE_URL?.replace(/\/$/, '') ||
         'https://maganghub.com';
+    kemnakerApiBaseUrl = 'https://maganghub.kemnaker.go.id/be/v1/api/list';
     async scrapeInternships(query) {
         const fetchedAt = new Date().toISOString();
         const notes = [];
@@ -33,16 +34,205 @@ let ScraperService = class ScraperService {
         };
     }
     async scrapeCompanies(query) {
-        const internships = await this.scrapeInternships({
-            keyword: query.keyword,
-            limit: Math.max(this.normalizeLimit(query.limit), 50),
+        const params = new URLSearchParams({
+            order_direction: query.order_direction || 'ASC',
+            page: query.page || '1',
+            limit: query.limit || '21',
+            per_page: query.per_page || '21',
         });
-        const companies = Array.from(new Set(internships.items.map((item) => item.company.trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+        const sourceUrl = `${this.kemnakerApiBaseUrl}/companies?${params.toString()}`;
+        const rows = await this.fetchKemnakerList(sourceUrl);
+        const companies = rows
+            .map((item) => this.toCompanyItem(item))
+            .filter((item) => item !== null);
         return {
-            sourceUrl: internships.sourceUrl,
-            fetchedAt: internships.fetchedAt,
+            sourceUrl,
+            fetchedAt: new Date().toISOString(),
             total: companies.length,
             companies,
+        };
+    }
+    async scrapeProvinces(query) {
+        const params = new URLSearchParams({
+            order_by: query.order_by || 'nama_propinsi',
+            order_direction: query.order_direction || 'ASC',
+            page: query.page || '1',
+            limit: query.limit || 'all',
+            per_page: query.per_page || 'all',
+        });
+        const sourceUrl = `${this.kemnakerApiBaseUrl}/provinces?${params.toString()}`;
+        const rows = await this.fetchKemnakerList(sourceUrl);
+        const provinces = rows
+            .map((item) => this.toProvinceItem(item))
+            .filter((item) => item !== null);
+        return {
+            sourceUrl,
+            fetchedAt: new Date().toISOString(),
+            total: provinces.length,
+            items: provinces,
+        };
+    }
+    async scrapeCities(query) {
+        const params = new URLSearchParams({
+            order_by: query.order_by || 'nama_kabupaten',
+            order_direction: query.order_direction || 'ASC',
+            page: query.page || '1',
+            limit: query.limit || 'all',
+            per_page: query.per_page || 'all',
+        });
+        const sourceUrl = `${this.kemnakerApiBaseUrl}/cities?${params.toString()}`;
+        const rows = await this.fetchKemnakerList(sourceUrl);
+        const cities = rows
+            .map((item) => this.toCityItem(item))
+            .filter((item) => item !== null);
+        return {
+            sourceUrl,
+            fetchedAt: new Date().toISOString(),
+            total: cities.length,
+            items: cities,
+        };
+    }
+    async fetchKemnakerList(url) {
+        const response = await this.safeFetch(url);
+        if (!response.ok) {
+            return [];
+        }
+        const payload = await response.json();
+        return this.extractListFromPayload(payload);
+    }
+    extractListFromPayload(payload) {
+        if (Array.isArray(payload)) {
+            return payload;
+        }
+        if (!payload || typeof payload !== 'object') {
+            return [];
+        }
+        const root = payload;
+        const directCandidates = ['data', 'items', 'results', 'rows'];
+        for (const key of directCandidates) {
+            const value = root[key];
+            if (Array.isArray(value)) {
+                return value;
+            }
+        }
+        if (root.data && typeof root.data === 'object') {
+            const dataObj = root.data;
+            for (const key of directCandidates) {
+                const value = dataObj[key];
+                if (Array.isArray(value)) {
+                    return value;
+                }
+            }
+        }
+        return [];
+    }
+    toProvinceItem(value) {
+        if (!value || typeof value !== 'object') {
+            return null;
+        }
+        const row = value;
+        const id_propinsi = this.asString(row.id_propinsi) ||
+            this.asString(row.province_id) ||
+            this.asString(row.id);
+        const nama_propinsi = this.asString(row.nama_propinsi) ||
+            this.asString(row.province) ||
+            this.asString(row.name);
+        if (!id_propinsi || !nama_propinsi) {
+            return null;
+        }
+        const refNegaraRaw = this.asRecord(row.ref_negara);
+        return {
+            id_propinsi,
+            id_negara: this.asNullableString(row.id_negara),
+            kode_propinsi: this.asNullableString(row.kode_propinsi),
+            nama_propinsi: this.cleanText(nama_propinsi),
+            ref_negara: refNegaraRaw
+                ? {
+                    id_negara: this.asString(refNegaraRaw.id_negara),
+                    kode_negara: this.asNullableString(refNegaraRaw.kode_negara),
+                    nama_negara: this.asNullableString(refNegaraRaw.nama_negara),
+                }
+                : null,
+        };
+    }
+    toCityItem(value) {
+        if (!value || typeof value !== 'object') {
+            return null;
+        }
+        const row = value;
+        const id_kabupaten = this.asString(row.id_kabupaten) ||
+            this.asString(row.city_id) ||
+            this.asString(row.id);
+        const nama_kabupaten = this.asString(row.nama_kabupaten) ||
+            this.asString(row.city) ||
+            this.asString(row.name);
+        if (!id_kabupaten || !nama_kabupaten) {
+            return null;
+        }
+        const refPropinsiRaw = this.asRecord(row.ref_propinsi);
+        return {
+            id_kabupaten,
+            id_propinsi: this.asNullableString(row.id_propinsi) ||
+                this.asNullableString(row.province_id),
+            kode_kabupaten: this.asNullableString(row.kode_kabupaten),
+            nama_kabupaten: this.cleanText(nama_kabupaten),
+            ref_propinsi: refPropinsiRaw
+                ? {
+                    id_propinsi: this.asString(refPropinsiRaw.id_propinsi),
+                    id_negara: this.asNullableString(refPropinsiRaw.id_negara) ||
+                        this.asNullableString(refPropinsiRaw.country_id),
+                    kode_propinsi: this.asNullableString(refPropinsiRaw.kode_propinsi),
+                    nama_propinsi: this.asNullableString(refPropinsiRaw.nama_propinsi),
+                }
+                : null,
+        };
+    }
+    toCompanyItem(value) {
+        if (!value || typeof value !== 'object') {
+            return null;
+        }
+        const row = value;
+        const id_perusahaan = this.asString(row.id_perusahaan) ||
+            this.asString(row.company_id) ||
+            this.asString(row.id);
+        const nama_perusahaan = this.asString(row.nama_perusahaan) ||
+            this.asString(row.company) ||
+            this.asString(row.name);
+        if (!id_perusahaan || !nama_perusahaan) {
+            return null;
+        }
+        const refJumlahPegawaiRaw = this.asRecord(row.ref_jumlah_pegawai);
+        return {
+            id_perusahaan,
+            id_desa: this.asNullableString(row.id_desa),
+            nama_perusahaan: this.cleanText(nama_perusahaan),
+            deskripsi_perusahaan: this.asNullableString(row.deskripsi_perusahaan),
+            alamat: this.asNullableString(row.alamat),
+            logo: this.asNullableString(row.logo),
+            banner: this.asNullableString(row.banner),
+            created_at: this.asNullableString(row.created_at),
+            updated_at: this.asNullableString(row.updated_at),
+            email: this.asNullableString(row.email),
+            telepon: this.asNullableString(row.telepon),
+            kode_sektor_usaha: this.asNullableString(row.kode_sektor_usaha),
+            nama_sektor_usaha: this.asNullableString(row.nama_sektor_usaha),
+            kode_kabupaten: this.asNullableString(row.kode_kabupaten),
+            nama_kabupaten: this.asNullableString(row.nama_kabupaten),
+            kode_provinsi: this.asNullableString(row.kode_provinsi),
+            nama_provinsi: this.asNullableString(row.nama_provinsi),
+            kode_pos: this.asNullableString(row.kode_pos),
+            skala_usaha: this.asNullableString(row.skala_usaha),
+            id_jumlah_pegawai: this.asNullableString(row.id_jumlah_pegawai),
+            kode_wlkp: this.asNullableString(row.kode_wlkp),
+            nib: this.asNullableString(row.nib),
+            npwp: this.asNullableString(row.npwp),
+            ref_jumlah_pegawai: refJumlahPegawaiRaw
+                ? {
+                    id_jumlah_pegawai: this.asString(refJumlahPegawaiRaw.id_jumlah_pegawai),
+                    jumlah_pegawai: this.asNullableString(refJumlahPegawaiRaw.jumlah_pegawai),
+                    norut: this.asNullableNumber(refJumlahPegawaiRaw.norut),
+                }
+                : null,
         };
     }
     async tryFetchJsonFeed() {
@@ -262,6 +452,32 @@ let ScraperService = class ScraperService {
     }
     asString(value) {
         return typeof value === 'string' ? value : '';
+    }
+    asNullableString(value) {
+        if (typeof value === 'string') {
+            const cleaned = this.cleanText(value);
+            return cleaned || null;
+        }
+        if (typeof value === 'number' || typeof value === 'boolean') {
+            return String(value);
+        }
+        return null;
+    }
+    asNullableNumber(value) {
+        if (typeof value === 'number') {
+            return Number.isFinite(value) ? value : null;
+        }
+        if (typeof value === 'string' && value.trim()) {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : null;
+        }
+        return null;
+    }
+    asRecord(value) {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) {
+            return null;
+        }
+        return value;
     }
     toAbsoluteUrl(value) {
         if (!value) {

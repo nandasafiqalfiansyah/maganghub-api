@@ -11,9 +11,11 @@ npm run start:dev
 
 Default server: `http://localhost:3000`
 
-Swagger UI: `http://localhost:3000/`
+Website: `http://localhost:3000/`
 
-Health check: `http://localhost:3000/health`
+Swagger UI: `http://localhost:3000/docs`
+
+Health check (HTML page): `http://localhost:3000/health`
 
 ## Konfigurasi
 
@@ -68,16 +70,38 @@ Response ringkas:
 
 Query params:
 
-- `keyword` (optional)
-- `limit` (optional)
+- `order_direction` (optional, default: `ASC`)
+- `page` (optional, default: `1`)
+- `limit` (optional, default: `21`)
+- `per_page` (optional, default: `21`)
 
 Contoh:
 
 ```bash
-curl "http://localhost:3000/api/scrape/companies?keyword=data"
+curl "http://localhost:3000/api/scrape/companies?order_direction=ASC&page=1&limit=21&per_page=21"
 ```
 
-### 3) Tambah tracking berdasarkan email
+### 3) List provinsi
+
+`GET /api/scrape/provinces`
+
+Default request mengikuti endpoint Kemnaker:
+
+```bash
+curl "http://localhost:3000/api/scrape/provinces?order_by=nama_propinsi&order_direction=ASC&page=1&limit=all&per_page=all"
+```
+
+### 4) List kota/kabupaten
+
+`GET /api/scrape/cities`
+
+Default request mengikuti endpoint Kemnaker:
+
+```bash
+curl "http://localhost:3000/api/scrape/cities?order_by=nama_kabupaten&order_direction=ASC&page=1&limit=all&per_page=all"
+```
+
+### 5) Tambah tracking berdasarkan email
 
 `POST /api/tracking/email`
 
@@ -93,7 +117,7 @@ Body JSON:
 
 Catatan: minimal salah satu dari `keyword` atau `company` wajib diisi.
 
-### 4) Lihat tracking email
+### 6) Lihat tracking email
 
 `GET /api/tracking/email/:email`
 
@@ -103,11 +127,11 @@ Contoh:
 curl "http://localhost:3000/api/tracking/email/user@example.com"
 ```
 
-### 5) Hapus tracking tertentu
+### 7) Hapus tracking tertentu
 
 `DELETE /api/tracking/email/:email/:trackingId`
 
-### 6) Cek lowongan yang match untuk email
+### 8) Cek lowongan yang match untuk email
 
 `GET /api/tracking/email/:email/matches`
 

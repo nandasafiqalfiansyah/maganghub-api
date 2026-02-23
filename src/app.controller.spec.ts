@@ -15,8 +15,13 @@ describe('AppController', () => {
   });
 
   describe('health', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return health html page', () => {
+      const result = appController.getHealth();
+
+      expect(typeof result).toBe('string');
+      expect(result).toContain('<!doctype html>');
+      expect(result).toContain('Service Healthy');
+      expect(result).toContain('/docs');
     });
   });
 });

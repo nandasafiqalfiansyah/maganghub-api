@@ -28,10 +28,30 @@ let ScraperController = class ScraperController {
             limit: limit ? Number(limit) : undefined,
         });
     }
-    async getCompanies(keyword, limit) {
+    async getCompanies(order_direction, page, limit, per_page) {
         return this.scraperService.scrapeCompanies({
-            keyword,
-            limit: limit ? Number(limit) : undefined,
+            order_direction,
+            page,
+            limit,
+            per_page,
+        });
+    }
+    async getProvinces(order_by, order_direction, page, limit, per_page) {
+        return this.scraperService.scrapeProvinces({
+            order_by,
+            order_direction,
+            page,
+            limit,
+            per_page,
+        });
+    }
+    async getCities(order_by, order_direction, page, limit, per_page) {
+        return this.scraperService.scrapeCities({
+            order_by,
+            order_direction,
+            page,
+            limit,
+            per_page,
         });
     }
 };
@@ -51,17 +71,65 @@ __decorate([
 ], ScraperController.prototype, "getInternships", null);
 __decorate([
     (0, swagger_1.ApiOperation)({
-        summary: 'Ambil list nama perusahaan dari lowongan yang terdeteksi',
+        summary: 'Ambil list perusahaan dari API Kemnaker',
     }),
-    (0, swagger_1.ApiQuery)({ name: 'keyword', required: false, type: String }),
-    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number, example: 50 }),
+    (0, swagger_1.ApiQuery)({ name: 'order_direction', required: false, type: String }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: String, example: '1' }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: String, example: '21' }),
+    (0, swagger_1.ApiQuery)({ name: 'per_page', required: false, type: String, example: '21' }),
     (0, common_1.Get)('companies'),
-    __param(0, (0, common_1.Query)('keyword')),
-    __param(1, (0, common_1.Query)('limit')),
+    __param(0, (0, common_1.Query)('order_direction')),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
+    __param(3, (0, common_1.Query)('per_page')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], ScraperController.prototype, "getCompanies", null);
+__decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Ambil list provinsi dari API Kemnaker' }),
+    (0, swagger_1.ApiQuery)({
+        name: 'order_by',
+        required: false,
+        type: String,
+        example: 'nama_propinsi',
+    }),
+    (0, swagger_1.ApiQuery)({ name: 'order_direction', required: false, type: String }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: String, example: '1' }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: String, example: 'all' }),
+    (0, swagger_1.ApiQuery)({ name: 'per_page', required: false, type: String, example: 'all' }),
+    (0, common_1.Get)('provinces'),
+    __param(0, (0, common_1.Query)('order_by')),
+    __param(1, (0, common_1.Query)('order_direction')),
+    __param(2, (0, common_1.Query)('page')),
+    __param(3, (0, common_1.Query)('limit')),
+    __param(4, (0, common_1.Query)('per_page')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], ScraperController.prototype, "getProvinces", null);
+__decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Ambil list kota/kabupaten dari API Kemnaker' }),
+    (0, swagger_1.ApiQuery)({
+        name: 'order_by',
+        required: false,
+        type: String,
+        example: 'nama_kabupaten',
+    }),
+    (0, swagger_1.ApiQuery)({ name: 'order_direction', required: false, type: String }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: String, example: '1' }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: String, example: 'all' }),
+    (0, swagger_1.ApiQuery)({ name: 'per_page', required: false, type: String, example: 'all' }),
+    (0, common_1.Get)('cities'),
+    __param(0, (0, common_1.Query)('order_by')),
+    __param(1, (0, common_1.Query)('order_direction')),
+    __param(2, (0, common_1.Query)('page')),
+    __param(3, (0, common_1.Query)('limit')),
+    __param(4, (0, common_1.Query)('per_page')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], ScraperController.prototype, "getCities", null);
 exports.ScraperController = ScraperController = __decorate([
     (0, swagger_1.ApiTags)('Scrape'),
     (0, common_1.Controller)('api/scrape'),

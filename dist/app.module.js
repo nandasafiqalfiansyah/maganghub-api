@@ -14,13 +14,19 @@ const scraper_controller_1 = require("./scraper/scraper.controller");
 const scraper_service_1 = require("./scraper/scraper.service");
 const tracking_controller_1 = require("./tracking/tracking.controller");
 const tracking_service_1 = require("./tracking/tracking.service");
+const web_controller_1 = require("./web.controller");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [],
-        controllers: [app_controller_1.AppController, scraper_controller_1.ScraperController, tracking_controller_1.TrackingController],
+        controllers: [
+            web_controller_1.WebController,
+            app_controller_1.AppController,
+            scraper_controller_1.ScraperController,
+            tracking_controller_1.TrackingController,
+        ],
         providers: [app_service_1.AppService, scraper_service_1.ScraperService, tracking_service_1.TrackingService],
     })
 ], AppModule);

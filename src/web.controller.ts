@@ -1,21 +1,16 @@
 import { Controller, Get, Header } from '@nestjs/common';
-import { AppService } from './app.service';
 
-@Controller('health')
-export class AppController {
-  constructor(private readonly appService: AppService) {}
-
+@Controller()
+export class WebController {
   @Get()
   @Header('content-type', 'text/html; charset=utf-8')
-  getHealth(): string {
-    const health = this.appService.getHealth();
-
+  home(): string {
     return `<!doctype html>
 <html lang="id">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Health Check - ${health.service}</title>
+    <title>Magang Hub API</title>
     <style>
       :root {
         color-scheme: dark;
@@ -76,24 +71,6 @@ export class AppController {
       }
       .nav-links a:hover { color: #93c5fd; }
       .nav-links a.active { color: #93c5fd; font-weight: 600; }
-      .nav-links a.active-green { color: #86efac; font-weight: 700; }
-      .nav-links a.active-green:hover { color: #86efac; }
-      .hero {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 14px;
-        flex-wrap: wrap;
-      }
-      .card {
-        background: rgba(15, 23, 42, 0.78);
-        border: 1px solid rgba(148, 163, 184, 0.18);
-        backdrop-filter: blur(8px);
-        border-radius: 16px;
-        padding: 18px;
-        margin-bottom: 14px;
-        animation: fadeUp .5s ease both;
-      }
       .status {
         display: inline-flex;
         align-items: center;
@@ -111,27 +88,26 @@ export class AppController {
         box-shadow: 0 0 0 rgba(34,197,94,.6);
         animation: pulse 1.7s infinite;
       }
-      h1 { margin: 10px 0 6px; font-size: 28px; }
-      .muted { color: #93a4bd; margin: 0; }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
-      }
-      .metric {
+      .card {
+        background: rgba(15, 23, 42, 0.78);
         border: 1px solid rgba(148, 163, 184, 0.18);
-        border-radius: 12px;
-        padding: 12px;
-        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 14px;
+        animation: fadeUp .5s ease both;
       }
-      .label { color: #93a4bd; font-size: 13px; margin-bottom: 5px; }
-      .value { font-size: 15px; font-weight: 600; word-break: break-word; }
-      .links a {
-        color: #93c5fd;
-        text-decoration: none;
-        margin-right: 14px;
+      h1 { margin: 10px 0 6px; font-size: 28px; }
+      p { margin: 0 0 8px 0; color: #93a4bd; }
+      code {
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        padding: 2px 8px;
       }
-      .links a:hover { text-decoration: underline; }
+      ul { margin: 10px 0 0 18px; }
+      li { margin: 6px 0; }
+      .muted { color: #94a3b8; }
       @keyframes pulse {
         0% { box-shadow: 0 0 0 0 rgba(34,197,94,.6); }
         70% { box-shadow: 0 0 0 14px rgba(34,197,94,0); }
@@ -155,40 +131,30 @@ export class AppController {
       <nav class="nav">
         <div class="brand">Magang Hub API</div>
         <div class="nav-links">
-          <a href="/">Home</a>
-          <a class="active-green" href="/health">Health</a>
+          <a class="active" href="/">Home</a>
+          <a href="/health">Health</a>
           <a href="/docs">Docs</a>
           <a href="/docs/openapi.json">OpenAPI</a>
         </div>
       </nav>
 
       <section class="card">
-        <div class="hero">
-          <div>
-            <div class="status"><span class="dot"></span> Service Healthy</div>
-            <h1>${health.service}</h1>
-            <p class="muted">Health check page dengan status runtime real-time.</p>
-          </div>
-        </div>
+        <div class="status"><span class="dot"></span> Service Ready</div>
+        <h1>Magang Hub Scraper API</h1>
+        <p>API untuk scraping lowongan, list perusahaan, provinsi, kota, dan tracking by email.</p>
       </section>
 
       <section class="card">
-        <div class="grid">
-          <div class="metric"><div class="label">Status</div><div class="value">${health.status.toUpperCase()}</div></div>
-          <div class="metric"><div class="label">Environment</div><div class="value">${health.environment}</div></div>
-          <div class="metric"><div class="label">Version</div><div class="value">${health.version}</div></div>
-          <div class="metric"><div class="label">Node</div><div class="value">${health.nodeVersion}</div></div>
-          <div class="metric"><div class="label">Uptime</div><div class="value">${health.uptimeHuman} (${health.uptimeSeconds}s)</div></div>
-          <div class="metric"><div class="label">Checked At</div><div class="value">${health.timestamp}</div></div>
-          <div class="metric"><div class="label">RSS Memory</div><div class="value">${Math.round(health.memory.rss / 1024 / 1024)} MB</div></div>
-          <div class="metric"><div class="label">Heap Used</div><div class="value">${Math.round(health.memory.heapUsed / 1024 / 1024)} MB</div></div>
-        </div>
-      </section>
-
-      <section class="card links">
-        <a href="${health.links.home}">Home</a>
-        <a href="${health.links.swagger}">Swagger</a>
-        <a href="${health.links.openApiJson}">OpenAPI JSON</a>
+        <p class="muted">Endpoint utama:</p>
+        <ul>
+          <li><code>GET /api/scrape/internships</code></li>
+          <li><code>GET /api/scrape/companies</code></li>
+          <li><code>GET /api/scrape/provinces</code></li>
+          <li><code>GET /api/scrape/cities</code></li>
+          <li><code>POST /api/tracking/email</code></li>
+          <li><code>GET /api/tracking/email/:email</code></li>
+          <li><code>GET /api/tracking/email/:email/matches</code></li>
+        </ul>
       </section>
     </main>
   </body>
