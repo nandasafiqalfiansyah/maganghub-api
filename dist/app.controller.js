@@ -141,6 +141,27 @@ let AppController = class AppController {
         margin-right: 14px;
       }
       .links a:hover { text-decoration: underline; }
+      .github-corner {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #e2e8f0;
+        background: rgba(15, 23, 42, 0.88);
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        text-decoration: none;
+        z-index: 20;
+        box-shadow: 0 10px 30px rgba(2, 6, 23, 0.45);
+      }
+      .github-corner:hover {
+        color: #93c5fd;
+        border-color: rgba(59, 130, 246, 0.45);
+      }
       @keyframes pulse {
         0% { box-shadow: 0 0 0 0 rgba(34,197,94,.6); }
         70% { box-shadow: 0 0 0 14px rgba(34,197,94,0); }
@@ -165,6 +186,7 @@ let AppController = class AppController {
         <div class="brand">Magang Hub API</div>
         <div class="nav-links">
           <a href="/">Home</a>
+          <a href="/api">API</a>
           <a class="active-green" href="/health">Health</a>
           <a href="/docs">Docs</a>
           <a href="/docs/openapi.json">OpenAPI</a>
@@ -197,9 +219,20 @@ let AppController = class AppController {
       <section class="card links">
         <a href="${health.links.home}">Home</a>
         <a href="${health.links.swagger}">Swagger</a>
-        <a href="${health.links.openApiJson}">OpenAPI JSON</a>
       </section>
     </main>
+    <a
+      class="github-corner"
+      href="https://github.com/nandasafiqalfiansyah/maganghub-api"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="GitHub Repository"
+      title="GitHub Repository"
+    >
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+        <path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.42-4.04-1.42-.55-1.38-1.33-1.75-1.33-1.75-1.1-.74.08-.73.08-.73 1.2.09 1.83 1.23 1.83 1.23 1.07 1.84 2.8 1.31 3.48 1 .1-.78.42-1.31.76-1.61-2.67-.31-5.48-1.34-5.48-5.97 0-1.32.47-2.4 1.23-3.25-.12-.3-.53-1.53.12-3.19 0 0 1.01-.32 3.3 1.24a11.4 11.4 0 0 1 6 0c2.29-1.56 3.3-1.24 3.3-1.24.65 1.66.24 2.89.12 3.19.77.85 1.23 1.93 1.23 3.25 0 4.65-2.81 5.65-5.49 5.96.43.37.82 1.1.82 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z"/>
+      </svg>
+    </a>
   </body>
 </html>`;
     }

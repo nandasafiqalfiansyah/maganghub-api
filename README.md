@@ -13,6 +13,8 @@ Default server: `http://localhost:3000`
 
 Website: `http://localhost:3000/`
 
+API list (non-doc): `http://localhost:3000/api`
+
 Swagger UI: `http://localhost:3000/docs`
 
 Health check (HTML page): `http://localhost:3000/health`
