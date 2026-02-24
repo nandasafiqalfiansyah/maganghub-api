@@ -79,7 +79,7 @@ async function bootstrap() {
 
         var nav = document.createElement('div');
         nav.id = 'copilot-custom-nav';
-        nav.innerHTML = '<div class="brand">Magang Hub API</div><div><a href="/">Home</a><a href="/health">Health</a><a class="active" href="/docs">Docs</a></div>';
+        nav.innerHTML = '<div class="brand">Magang Hub API</div><div><a href="/">Home</a><a class="active" href="/docs">Docs</a></div>';
 
         document.body.insertBefore(nav, document.body.firstChild);
 
