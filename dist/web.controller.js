@@ -282,7 +282,6 @@ let WebController = class WebController {
           <a class="active" href="/">Home</a>
           <a href="/health">Health</a>
           <a href="/docs">Docs</a>
-          <a href="/docs/openapi.json">OpenAPI</a>
         </div>
       </nav>
 
