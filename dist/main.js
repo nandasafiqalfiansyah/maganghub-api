@@ -12,7 +12,6 @@ async function bootstrap() {
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
     swagger_1.SwaggerModule.setup('docs', app, document, {
-        jsonDocumentUrl: '/docs/openapi.json',
         customCssUrl: ['https://unpkg.com/swagger-ui-dist@5/swagger-ui.css'],
         customCss: `
       body { background: radial-gradient(circle at 20% 10%, #1e293b 0%, #0b1220 40%, #050913 100%) !important; }
@@ -80,7 +79,7 @@ async function bootstrap() {
 
         var nav = document.createElement('div');
         nav.id = 'copilot-custom-nav';
-        nav.innerHTML = '<div class="brand">Magang Hub API</div><div><a href="/">Home</a><a href="/health">Health</a><a class="active" href="/docs">Docs</a><a href="/docs/openapi.json">OpenAPI</a></div>';
+        nav.innerHTML = '<div class="brand">Magang Hub API</div><div><a href="/">Home</a><a href="/health">Health</a><a class="active" href="/docs">Docs</a></div>';
 
         document.body.insertBefore(nav, document.body.firstChild);
 
@@ -98,7 +97,6 @@ async function bootstrap() {
       });
     `,
         swaggerOptions: {
-            url: '/docs/openapi.json',
             persistAuthorization: true,
         },
     });
